@@ -1,9 +1,10 @@
 import React, { ReactNode } from "react";
 import { Dimensions, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import Animated, { useAnimatedGestureHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { COL, getOrder, getPosition, Positions, SIZE } from "./Config";
+import { PanGestureHandler } from "react-native-gesture-handler";
 
 interface ItemProps {
   children: ReactNode;
@@ -21,6 +22,24 @@ const Item = ({ children, positions, id }: ItemProps) => {
   const translateX = useSharedValue(position.x);
   const translateY = useSharedValue(position.y);
   // console.log(positions.value[id], id, position)
+
+  const onGestureEvent = useAnimatedGestureHandler({
+    onStart: (event, context: any) => {
+      console.log(111111111111111111111, translateX.value)
+      context.xOffset = translateX.value
+      context.yOffset = translateY.value
+    },
+    onActive: (event, context) => {
+      // console.log(event)
+      translateX.value = context.xOffset + event.translationX;
+      translateY.value = context.yOffset + event.translationY;
+    },
+    onEnd: (event, context) => {
+      
+    }
+  })
+  
+  
   const style = useAnimatedStyle(() => {
     return {
       position: 'absolute',
@@ -37,7 +56,11 @@ const Item = ({ children, positions, id }: ItemProps) => {
     }
   })
   // console.log(positions[id], id)
-  return <Animated.View style={style}>{children}</Animated.View>;//Defining this view in order to translate children's parent view
+  //Defining this view in order to translate children's parent view
+  
+  return <PanGestureHandler onGestureEvent={onGestureEvent}>
+    <Animated.View style={style}>{children}</Animated.View>
+  </PanGestureHandler>
 };
 
 export default Item;
