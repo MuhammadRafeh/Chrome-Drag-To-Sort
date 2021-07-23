@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { Dimensions, View, StyleSheet } from "react-native";
-import Animated, { useAnimatedGestureHandler, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { useAnimatedGestureHandler, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { animationConfig, COL, getOrder, getPosition, Positions, SIZE } from "./Config";
@@ -22,6 +22,11 @@ const Item = ({ children, positions, id }: ItemProps) => {
   const translateX = useSharedValue(position.x);
   const translateY = useSharedValue(position.y);
   const isGestureActive = useSharedValue(false);
+  useAnimatedReaction(() => positions.value[id], (newOrder) => { // litening to value and if value change the next function called
+    const newPosition = getPosition(newOrder);
+    translateX.value = withTiming(newPosition.x, animationConfig);
+    translateY.value = withTiming(newPosition.y, animationConfig);
+  });
   // console.log(positions.value[id], id, position)
 
   const onGestureEvent = useAnimatedGestureHandler({
@@ -35,6 +40,19 @@ const Item = ({ children, positions, id }: ItemProps) => {
       // console.log(event)
       translateX.value = context.xOffset + event.translationX;
       translateY.value = context.yOffset + event.translationY;
+      const oldOrder = positions.value[id];
+      const newOrder = getOrder(translateX.value, translateY.value);
+      if (oldOrder != newOrder){
+        const idToSwap = Object.keys(positions.value).find(key => positions.value[key] === newOrder)
+        // const idToSwap = Object.keys(positions.value).find
+        // console.log(idToSwap);
+        if (idToSwap){
+          const newPositions = JSON.parse(JSON.stringify(positions.value)) //BY THIS we are cloning object supported by reanimated
+          newPositions[id] = newOrder;
+          newPositions[idToSwap] = oldOrder;
+          positions.value = newPositions;
+        }
+      }
     },
     onEnd: (event, context) => {
       const destination = getPosition(positions.value[id]);
