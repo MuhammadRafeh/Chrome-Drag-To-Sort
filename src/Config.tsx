@@ -14,3 +14,15 @@ export const animationConfig = {
   easing: Easing.inOut(Easing.ease),
   duration: 350,
 };
+
+export const getPosition = (order: number) => {
+  "worklet";
+  return {
+    x: (order % COL) * SIZE,
+    y: Math.floor(order / COL) * SIZE
+  };
+}
+
+// export const getOrder = () => {
+
+// }
