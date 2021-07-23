@@ -1,8 +1,8 @@
 import { Dimensions } from "react-native";
 import { Easing } from "react-native-reanimated";
 
-export interface Positions {
-  [id: string]: number;
+export interface Positions { 
+  [id: string]: number;//id = 'google', number is order
 }
 
 const { width } = Dimensions.get("window");
@@ -15,14 +15,17 @@ export const animationConfig = {
   duration: 350,
 };
 
-export const getPosition = (order: number) => {
+export const getPosition = (order: number) => { //position on screen
   "worklet";
-  return {
-    x: (order % COL) * SIZE,
-    y: Math.floor(order / COL) * SIZE
+  return { //this will apply according to parent view
+    x: (order % COL) * SIZE, // order % COL gives 0 | 1 //x return 0 || SIZE
+    y: Math.floor(order / COL) * SIZE //Math.floor => 7.98 gives us 7 gives lower number or equal
   };
 }
 
-// export const getOrder = () => {
-
-// }
+export const getOrder = (x: number, y: number) => {// return order of item
+  "worklet";
+  const col = Math.round(x / SIZE) //0 || 1
+  const row = Math.round(y / SIZE)// 0, 1, ....
+  return row * COL + col;
+}

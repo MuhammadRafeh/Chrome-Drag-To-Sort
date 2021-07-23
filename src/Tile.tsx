@@ -8,6 +8,7 @@ const styles = StyleSheet.create({
   container: {
     width: SIZE,
     height: SIZE,
+    // backgroundColor: 'blue'
   },
 });
 interface TileProps {
