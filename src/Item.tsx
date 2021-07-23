@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
 import { Dimensions, View, StyleSheet } from "react-native";
-import Animated, { useAnimatedGestureHandler, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { useAnimatedGestureHandler, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { COL, getOrder, getPosition, Positions, SIZE } from "./Config";
+import { animationConfig, COL, getOrder, getPosition, Positions, SIZE } from "./Config";
 import { PanGestureHandler } from "react-native-gesture-handler";
 
 interface ItemProps {
@@ -21,7 +21,7 @@ const Item = ({ children, positions, id }: ItemProps) => {
   // const position = getPosition(getOrder(p1.x, p1.y))
   const translateX = useSharedValue(position.x);
   const translateY = useSharedValue(position.y);
-  // const isGestureStart = useSharedValue(false);
+  const isGestureActive = useSharedValue(false);
   // console.log(positions.value[id], id, position)
 
   const onGestureEvent = useAnimatedGestureHandler({
@@ -29,6 +29,7 @@ const Item = ({ children, positions, id }: ItemProps) => {
       console.log(111111111111111111111, translateX.value)
       context.xOffset = translateX.value
       context.yOffset = translateY.value
+      isGestureActive.value = true;
     },
     onActive: (event, context) => {
       // console.log(event)
@@ -36,19 +37,25 @@ const Item = ({ children, positions, id }: ItemProps) => {
       translateY.value = context.yOffset + event.translationY;
     },
     onEnd: (event, context) => {
-      const firstPosition = getPosition(positions.value[id]);
-      translateX.value = withTiming(firstPosition.x)
-      translateY.value = withTiming(firstPosition.y)
+      const destination = getPosition(positions.value[id]);
+      translateX.value = withTiming(destination.x, animationConfig, () => {
+        isGestureActive.value = false
+      })
+      translateY.value = withTiming(destination.y, animationConfig)
     }
   })
 
 
   const style = useAnimatedStyle(() => {
+    const zIndex = isGestureActive.value ? 99: 0;
+    const scale = isGestureActive.value ? 1.1: 1;
     return {
+      zIndex,
       transform: [
         // {scale: isGestureStart.value ? 1.2: 1},
         { translateX: translateX.value },
-        { translateY: translateY.value }
+        { translateY: translateY.value },
+        {scale}
       ],
       // backgroundColor: 'red'
     }
