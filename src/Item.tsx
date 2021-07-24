@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, RefObject } from "react";
 import { Dimensions, View, StyleSheet } from "react-native";
 import Animated, { useAnimatedGestureHandler, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,18 +10,19 @@ interface ItemProps {
   children: ReactNode;
   id: string;
   positions: Animated.SharedValue<Positions>;
+  scrollView: RefObject<Animated.ScrollView>;
+  scrollY: Animated.SharedValue<number>
 }
-
-const Item = ({ children, positions, id }: ItemProps) => {
+const Item = ({ children, positions, id, scrollView, scrollY }: ItemProps) => {
   const inset = useSafeAreaInsets();
   const containerHeight =
     Dimensions.get("window").height - inset.top - inset.bottom;
-  // const contentHeight = (Object.keys(positions.value).length / COL) * SIZE;
+  const contentHeight = (Object.keys(positions.value).length / COL) * SIZE;
   const position = getPosition(positions.value[id]) //positions[id] is a position;
   // const position = getPosition(getOrder(p1.x, p1.y))
   const translateX = useSharedValue(position.x);
   const translateY = useSharedValue(position.y);
-  const isGestureActive = useSharedValue(false);
+  const isGestureActive = useSharedValue(false); //positions = {'chrome': 7}
   useAnimatedReaction(() => positions.value[id], (newOrder) => { // litening to value and if value change the next function called
     const newPosition = getPosition(newOrder);
     translateX.value = withTiming(newPosition.x, animationConfig);
@@ -31,7 +32,7 @@ const Item = ({ children, positions, id }: ItemProps) => {
 
   const onGestureEvent = useAnimatedGestureHandler({
     onStart: (_, context: any) => { //we keep record of already done tranlation because gesture event always start with 0;
-      console.log(111111111111111111111, translateX.value)
+      // console.log(111111111111111111111, translateX.value)
       context.xOffset = translateX.value
       context.yOffset = translateY.value
       isGestureActive.value = true;
@@ -42,7 +43,7 @@ const Item = ({ children, positions, id }: ItemProps) => {
       translateY.value = context.yOffset + event.translationY;
       const oldOrder = positions.value[id];
       const newOrder = getOrder(translateX.value, translateY.value);
-      if (oldOrder != newOrder){
+      if (oldOrder != newOrder){ //Object.keys(positions.value) is ['chrome', 'github', ....] positions.value[key] = order
         const idToSwap = Object.keys(positions.value).find(key => positions.value[key] === newOrder)
         // const idToSwap = Object.keys(positions.value).find
         // console.log(idToSwap);
@@ -53,6 +54,10 @@ const Item = ({ children, positions, id }: ItemProps) => {
           positions.value = newPositions;
         }
       }
+      const lowerBound = scrollY.value;
+      const upperBound = scrollY.value + containerHeight - SIZE;// To move earlier we are removing the SIZE of the tab
+      const maxScroll = contentHeight - containerHeight; //Kitna scroll kr sakty hm from the container to top or bottom
+      const scrollLeft = maxScroll - scrollY.value// nichy ki taraf scroll kitna bacha;
     },
     onEnd: (event, context) => {
       const destination = getPosition(positions.value[id]);
