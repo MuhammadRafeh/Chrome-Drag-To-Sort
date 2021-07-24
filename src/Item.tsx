@@ -1,6 +1,6 @@
 import React, { ReactNode, RefObject } from "react";
 import { Dimensions, View, StyleSheet } from "react-native";
-import Animated, { useAnimatedGestureHandler, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { scrollTo, useAnimatedGestureHandler, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { animationConfig, COL, getOrder, getPosition, Positions, SIZE } from "./Config";
@@ -43,11 +43,11 @@ const Item = ({ children, positions, id, scrollView, scrollY }: ItemProps) => {
       translateY.value = context.yOffset + event.translationY;
       const oldOrder = positions.value[id];
       const newOrder = getOrder(translateX.value, translateY.value);
-      if (oldOrder != newOrder){ //Object.keys(positions.value) is ['chrome', 'github', ....] positions.value[key] = order
+      if (oldOrder != newOrder) { //Object.keys(positions.value) is ['chrome', 'github', ....] positions.value[key] = order
         const idToSwap = Object.keys(positions.value).find(key => positions.value[key] === newOrder)
         // const idToSwap = Object.keys(positions.value).find
         // console.log(idToSwap);
-        if (idToSwap){
+        if (idToSwap) {
           const newPositions = JSON.parse(JSON.stringify(positions.value)) //BY THIS we are cloning object supported by reanimated
           newPositions[id] = newOrder;
           newPositions[idToSwap] = oldOrder;
@@ -58,6 +58,20 @@ const Item = ({ children, positions, id, scrollView, scrollY }: ItemProps) => {
       const upperBound = scrollY.value + containerHeight - SIZE;// To move earlier we are removing the SIZE of the tab
       const maxScroll = contentHeight - containerHeight; //Kitna scroll kr sakty hm from the container to top or bottom
       const scrollLeft = maxScroll - scrollY.value// nichy ki taraf scroll kitna bacha;
+      if (translateY.value < lowerBound) {//lowerBound is container starting point
+        const diff = Math.min(lowerBound - translateY.value, lowerBound);
+        scrollY.value -= diff;
+        context.yOffset -= diff;
+        translateY.value = context.yOffset + event.translationY;
+        scrollTo(scrollView, 0, scrollY.value, false);
+      }
+      if (translateY.value > upperBound) {//upperbound is container end point - size of item
+        const diff = Math.min(translateY.value - upperBound, scrollLeft);
+        scrollY.value += diff;
+        context.yOffset += diff;
+        translateY.value = context.yOffset + event.translationY;
+        scrollTo(scrollView, 0, scrollY.value, false);
+      }
     },
     onEnd: (event, context) => {
       const destination = getPosition(positions.value[id]);
@@ -70,15 +84,15 @@ const Item = ({ children, positions, id, scrollView, scrollY }: ItemProps) => {
 
 
   const style = useAnimatedStyle(() => {
-    const zIndex = isGestureActive.value ? 99: 0;
-    const scale = isGestureActive.value ? 1.1: 1;
+    const zIndex = isGestureActive.value ? 99 : 0;
+    const scale = isGestureActive.value ? 1.1 : 1;
     return {
       zIndex,
       transform: [
         // {scale: isGestureStart.value ? 1.2: 1},
         { translateX: translateX.value },
         { translateY: translateY.value },
-        {scale}
+        { scale }
       ],
       // backgroundColor: 'red'
     }
